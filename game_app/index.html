@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Guardian - Fight Plastic Pollution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #4A90E2 50%, #1E3A8A 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        #gameContainer {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        #statsBar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(180deg, #4A90E2 0%, #1E5A8E 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .plastic {
+            position: absolute;
+            width: 30px;
+            height: 35px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            animation: drift 3s ease-in-out infinite;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.4));
+        }
+
+        .plastic:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .plastic-bottle {
+            width: 20px;
+            height: 35px;
+            background: linear-gradient(
+                180deg, 
+                transparent 0%, 
+                transparent 18%, 
+                var(--color) 18%, 
+                var(--color) 22%,
+                color-mix(in srgb, var(--color) 80%, white) 22%,
+                color-mix(in srgb, var(--color) 80%, white) 78%,
+                var(--color) 78%,
+                var(--color) 82%,
+                transparent 82%
+            );
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .plastic-bottle::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 7px;
+            background: linear-gradient(180deg, var(--color) 0%, color-mix(in srgb, var(--color) 70%, black) 100%);
+            border-radius: 3px 3px 0 0;
+            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.3);
+        }
+
+        .plastic-bottle::after {
+            content: '';
+            position: absolute;
+            top: 24%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 28px;
+            background: linear-gradient(
+                120deg,
+                transparent 0%,
+                rgba(255,255,255,0.4) 30%,
+                transparent 50%,
+                rgba(255,255,255,0.2) 70%,
+                transparent 100%
+            );
+            border-radius: 6px;
+            pointer-events: none;
+        }
+
+        .plastic-bag {
+            width: 30px;
+            height: 35px;
+            background: linear-gradient(
+                135deg,
+                var(--color) 0%,
+                color-mix(in srgb, var(--color) 90%, white) 30%,
+                var(--color) 50%,
+                color-mix(in srgb, var(--color) 80%, white) 80%,
+                var(--color) 100%
+            );
+            opacity: 0.75;
+            clip-path: polygon(
+                25% 3%, 75% 3%, 
+                95% 18%, 98% 35%, 
+                92% 60%, 88% 80%, 
+                85% 95%, 70% 100%, 
+                30% 100%, 15% 95%, 
+                12% 80%, 8% 60%, 
+                2% 35%, 5% 18%
+            );
+            position: relative;
+        }
+
+        .plastic-bag::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 28%;
+            width: 44%;
+            height: 8%;
+            background: color-mix(in srgb, var(--color) 60%, black);
+            border-radius: 2px;
+        }
+
+        .plastic-bag::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 10%;
+            width: 80%;
+            height: 70%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255,255,255,0.3) 20%,
+                transparent 40%,
+                rgba(255,255,255,0.2) 60%,
+                transparent 80%
+            );
+            pointer-events: none;
+        }
+
+        .plastic-cup {
+            width: 25px;
+            height: 32px;
+            background: linear-gradient(
+                180deg, 
+                color-mix(in srgb, var(--color) 95%, white) 0%, 
+                var(--color) 50%,
+                color-mix(in srgb, var(--color) 85%, black) 100%
+            );
+            clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .plastic-cup::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            height: 3px;
+            background: color-mix(in srgb, var(--color) 70%, black);
+            border-radius: 2px;
+        }
+
+        .plastic-cup::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 15%;
+            width: 70%;
+            height: 80%;
+            background: linear-gradient(
+                100deg,
+                transparent 0%,
+                rgba(255,255,255,0.5) 25%,
+                transparent 45%,
+                rgba(255,255,255,0.3) 70%,
+                transparent 100%
+            );
+            clip-path: polygon(5% 0%, 95% 0%, 100% 100%, 0% 100%);
+            pointer-events: none;
+        }
+
+        .plastic-wrapper {
+            width: 38px;
+            height: 26px;
+            background: linear-gradient(
+                45deg,
+                var(--color) 0%,
+                color-mix(in srgb, var(--color) 90%, white) 25%,
+                var(--color) 50%,
+                color-mix(in srgb, var(--color) 85%, white) 75%,
+                var(--color) 100%
+            );
+            opacity: 0.85;
+            border-radius: 25px;
+            transform: rotate(15deg);
+            position: relative;
+            box-shadow: inset 2px 2px 4px rgba(255,255,255,0.3), 
+                        inset -2px -2px 4px rgba(0,0,0,0.2);
+        }
+
+        .plastic-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            width: 80%;
+            height: 60%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                rgba(255,255,255,0.4) 3px,
+                transparent 6px,
+                transparent 12px
+            );
+            border-radius: 15px;
+            pointer-events: none;
+        }
+
+        .plastic-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 80%;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(255,255,255,0.3) 0%,
+                transparent 60%
+            );
+            pointer-events: none;
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(10px); }
+        }
+
+        .fish {
+            position: absolute;
+            font-size: 30px;
+            pointer-events: none;
+            animation: swim 8s linear infinite;
+        }
+
+        @keyframes swim {
+            0% { left: -50px; }
+            100% { left: 110%; }
+        }
+
+        .bubble {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: rise 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rise {
+            0% { bottom: -20px; opacity: 0.5; }
+            100% { bottom: 110%; opacity: 0; }
+        }
+
+        .trapped-turtle {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+            animation: struggle 0.5s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .trapped-turtle:hover {
+            transform: scale(1.15);
+        }
+
+        @keyframes struggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .turtle-body {
+            font-size: 50px;
+            position: relative;
+        }
+
+        .plastic-net {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 70px;
+            height: 70px;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(100, 100, 100, 0.6) 0px,
+                    transparent 1px,
+                    transparent 8px,
+                    rgba(100, 100, 100, 0.6) 9px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(100, 100, 100, 0.6) 0px,
+                    transparent 1px,
+                    transparent 8px,
+                    rgba(100, 100, 100, 0.6) 9px
+                );
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .magnet-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .magnet-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .magnet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .magnet-active {
+            animation: pulse 0.5s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.8) !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .collecting {
+            animation: collect 0.5s ease-out forwards;
+        }
+
+        @keyframes collect {
+            0% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+            }
+            100% { 
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        #infoPanel {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .fact {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-left: 4px solid #FFD700;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+
+        #gameOver {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1000;
+            min-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        #gameOver h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #FFD700;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0px);
+        }
+
+        .impact-message {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(76, 175, 80, 0.3);
+            border-radius: 10px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            #gameCanvas { height: 400px; }
+            #gameOver { min-width: 300px; padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🌊 Ocean Guardian 🌊 </h1>
+        <p class="subtitle">Help clean Australia's oceans from plastic pollution!</p>
+        
+        <div id="statsBar">
+            <div class="stat">
+                <div class="stat-label">Plastic Collected</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Time Left</div>
+                <div class="stat-value" id="timer">60s</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Marine Life Saved</div>
+                <div class="stat-value" id="saved">0</div>
+            </div>
+            <div class="stat">
+                <button class="magnet-btn" id="magnetBtn" onclick="activateMagnet()">
+                    🧲 Magnet (<span id="magnetCount">3</span>)
+                </button>
+            </div>
+        </div>
+
+        <div id="gameCanvas"></div>
+
+        <div id="infoPanel">
+            <h2>🌏 The Crisis</h2>
+            <div class="fact">
+                <strong>Australia:</strong> Over 130,000 tonnes of plastic enters Australian waters annually, threatening the Great Barrier Reef and marine ecosystems.
+            </div>
+            <div class="fact">
+                <strong>Vietnam:</strong> Coastal cities release 280,000-730,000 tonnes of plastic waste into the ocean each year, impacting fishing communities and tourism.
+            </div>
+            <div class="fact">
+                <strong>Impact:</strong> Plastic pollution kills 100,000 marine animals annually and microplastics enter our food chain, affecting human health.
+            </div>
+        </div>
+    </div>
+
+    <div id="gameOver">
+        <h2>🎉 Mission Complete!</h2>
+        <p style="font-size: 1.3em; margin: 20px 0;">
+            You collected <strong id="finalScore">0</strong> pieces of plastic!<br>
+            Saved <strong id="finalSaved">0</strong> marine creatures!
+        </p>
+        <div class="impact-message">
+            <strong>Real World Impact:</strong><br>
+            If everyone collected just 1kg of plastic from beaches, we could remove over 7 million tonnes globally per year!
+        </div>
+        <button class="btn" onclick="restartGame()">🔄 Play Again</button>
+        <button class="btn" onclick="shareResults()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">📤 Share Impact</button>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let timeLeft = 60;
+        let marineLifeSaved = 0;
+        let gameActive = true;
+        let magnetCount = 3;
+        let magnetActive = false;
+        
+        // Interval IDs for proper cleanup
+        let intervals = {
+            plastic: null,
+            fish: null,
+            bubble: null,
+            turtle: null,
+            timer: null
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const plasticTypes = [
+            { color: '#FF6B6B', type: 'bottle' },
+            { color: '#4ECDC4', type: 'bag' },
+            { color: '#FFE66D', type: 'straw' },
+            { color: '#95E1D3', type: 'cup' },
+            { color: '#FF8B94', type: 'wrapper' }
+        ];
+        const fishTypes = ['🐟', '🐠', '🐡', '🦈', '🐙', '🦑'];
+
+        // Initialize game
+        function init() {
+            // Clear all existing intervals
+            clearAllIntervals();
+            
+            // Reset game state
+            score = 0;
+            timeLeft = 60;
+            marineLifeSaved = 0;
+            magnetCount = 3;
+            magnetActive = false;
+            gameActive = true;
+            
+            // Update UI
+            updateScore();
+            updateTimer();
+            updateMarineLife();
+            document.getElementById('magnetCount').textContent = magnetCount;
+            document.getElementById('magnetBtn').disabled = false;
+            document.getElementById('magnetBtn').classList.remove('magnet-active');
+            document.getElementById('gameOver').style.display = 'none';
+            
+            // Clear canvas
+            canvas.innerHTML = '';
+
+            startGame();
+        }
+
+        function clearAllIntervals() {
+            Object.values(intervals).forEach(interval => {
+                if (interval) clearInterval(interval);
+            });
+            intervals = {
+                plastic: null,
+                fish: null,
+                bubble: null,
+                turtle: null,
+                timer: null
+            };
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function updateTimer() {
+            document.getElementById('timer').textContent = timeLeft + 's';
+        }
+
+        function updateMarineLife() {
+            document.getElementById('saved').textContent = marineLifeSaved;
+        }
+
+        function startGame() {
+            // Spawn plastic regularly
+            intervals.plastic = setInterval(spawnPlastic, 1500);
+            
+            // Spawn fish occasionally
+            intervals.fish = setInterval(spawnFish, 3000);
+            
+            // Spawn bubbles
+            intervals.bubble = setInterval(spawnBubble, 800);
+            
+            // Spawn trapped turtle every 10 seconds
+            intervals.turtle = setInterval(spawnTrappedTurtle, 10000);
+            
+            // Timer countdown
+            intervals.timer = setInterval(() => {
+                if (!gameActive) return;
+                
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            // Initial spawns
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => spawnPlastic(), i * 300);
+            }
+            
+            // First turtle after 5 seconds
+            setTimeout(() => spawnTrappedTurtle(), 5000);
+        }
+
+        function spawnPlastic() {
+            if (!gameActive) return;
+
+            const plastic = document.createElement('div');
+            const plasticData = plasticTypes[Math.floor(Math.random() * plasticTypes.length)];
+            
+            plastic.className = 'plastic plastic-' + plasticData.type;
+            plastic.style.setProperty('--color', plasticData.color);
+            plastic.style.left = Math.random() * (canvas.clientWidth - 40) + 'px';
+            plastic.style.top = Math.random() * (canvas.clientHeight - 45) + 'px';
+            plastic.style.animationDelay = Math.random() * 2 + 's';
+            plastic.dataset.type = 'plastic';
+
+            plastic.onclick = function(e) {
+                e.stopPropagation();
+                collectPlastic(plastic);
+            };
+
+            canvas.appendChild(plastic);
+
+            // Remove if not collected after 8 seconds
+            const timeout = setTimeout(() => {
+                if (plastic.parentNode) {
+                    plastic.remove();
+                }
+            }, 8000);
+            
+            // Store timeout for cleanup
+            plastic.dataset.timeout = timeout;
+        }
+
+        function collectPlastic(element) {
+            if (!element.parentNode) return; // Already collected
+            
+            // Clear the timeout
+            if (element.dataset.timeout) {
+                clearTimeout(parseInt(element.dataset.timeout));
+            }
+            
+            score++;
+            updateScore();
+            
+            // Every 5 plastics collected = 1 marine life saved
+            if (score % 5 === 0) {
+                marineLifeSaved++;
+                updateMarineLife();
+                showFloatingText('🐢 Marine Life Saved!', element);
+            } else {
+                showFloatingText('+1', element);
+            }
+
+            element.style.transform = 'scale(1.5) rotate(360deg)';
+            element.style.opacity = '0';
+            element.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                if (element.parentNode) {
+                    element.remove();
+                }
+            }, 300);
+        }
+
+        function spawnTrappedTurtle() {
+            if (!gameActive) return;
+
+            const turtle = document.createElement('div');
+            turtle.className = 'trapped-turtle';
+            turtle.style.left = Math.random() * (canvas.clientWidth - 80) + 'px';
+            turtle.style.top = Math.random() * (canvas.clientHeight - 80) + 'px';
+            turtle.dataset.type = 'turtle';
+
+            const turtleBody = document.createElement('div');
+            turtleBody.className = 'turtle-body';
+            turtleBody.textContent = '🐢';
+
+            const plasticNet = document.createElement('div');
+            plasticNet.className = 'plastic-net';
+
+            turtle.appendChild(turtleBody);
+            turtle.appendChild(plasticNet);
+
+            turtle.onclick = function(e) {
+                e.stopPropagation();
+                rescueTurtle(turtle);
+            };
+
+            canvas.appendChild(turtle);
+
+            // Remove if not rescued after 8 seconds
+            const timeout = setTimeout(() => {
+                if (turtle.parentNode) {
+                    turtle.remove();
+                }
+            }, 8000);
+            
+            turtle.dataset.timeout = timeout;
+        }
+
+        function rescueTurtle(element) {
+            if (!element.parentNode) return; // Already rescued
+            
+            // Clear the timeout
+            if (element.dataset.timeout) {
+                clearTimeout(parseInt(element.dataset.timeout));
+            }
+            
+            marineLifeSaved += 3;
+            score += 10;
+            updateMarineLife();
+            updateScore();
+            
+            showFloatingText('🎉 TURTLE RESCUED! +10', element);
+
+            element.style.transform = 'scale(2) rotate(360deg)';
+            element.style.opacity = '0';
+            element.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                if (element.parentNode) {
+                    element.remove();
+                }
+            }, 500);
+        }
+
+        function activateMagnet() {
+            if (magnetCount <= 0 || magnetActive || !gameActive) return;
+
+            magnetActive = true;
+            magnetCount--;
+            document.getElementById('magnetCount').textContent = magnetCount;
+            
+            const magnetBtn = document.getElementById('magnetBtn');
+            magnetBtn.classList.add('magnet-active');
+            
+            if (magnetCount === 0) {
+                magnetBtn.disabled = true;
+            }
+
+            // Collect all plastic on screen
+            const allPlastics = document.querySelectorAll('.plastic');
+            let collectedCount = 0;
+
+            allPlastics.forEach((plastic, index) => {
+                setTimeout(() => {
+                    if (plastic.parentNode) {
+                        // Clear the timeout
+                        if (plastic.dataset.timeout) {
+                            clearTimeout(parseInt(plastic.dataset.timeout));
+                        }
+                        
+                        plastic.classList.add('collecting');
+                        plastic.style.pointerEvents = 'none';
+                        collectedCount++;
+                        score++;
+                        
+                        setTimeout(() => {
+                            if (plastic.parentNode) {
+                                plastic.remove();
+                            }
+                        }, 500);
+                    }
+                }, index * 50);
+            });
+
+            setTimeout(() => {
+                updateScore();
+                
+                if (collectedCount > 0) {
+                    const saved = Math.floor(collectedCount / 5);
+                    marineLifeSaved += saved;
+                    updateMarineLife();
+                    
+                    showFloatingText(`🧲 Collected ${collectedCount} plastics!`, { 
+                        style: { 
+                            left: (canvas.clientWidth / 2 - 100) + 'px', 
+                            top: (canvas.clientHeight / 2) + 'px' 
+                        } 
+                    });
+                }
+                
+                magnetActive = false;
+                magnetBtn.classList.remove('magnet-active');
+            }, allPlastics.length * 50 + 600);
+        }
+
+        function showFloatingText(text, element) {
+            const floater = document.createElement('div');
+            floater.textContent = text;
+            floater.style.position = 'absolute';
+            floater.style.left = element.style.left;
+            floater.style.top = element.style.top;
+            floater.style.fontSize = '24px';
+            floater.style.fontWeight = 'bold';
+            floater.style.color = '#FFD700';
+            floater.style.pointerEvents = 'none';
+            floater.style.animation = 'float-up 1s ease-out forwards';
+            floater.style.zIndex = '100';
+            floater.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+            canvas.appendChild(floater);
+
+            setTimeout(() => {
+                if (floater.parentNode) {
+                    floater.remove();
+                }
+            }, 1000);
+        }
+
+        function spawnFish() {
+            if (!gameActive) return;
+
+            const fish = document.createElement('div');
+            fish.className = 'fish';
+            fish.textContent = fishTypes[Math.floor(Math.random() * fishTypes.length)];
+            fish.style.top = Math.random() * (canvas.clientHeight - 50) + 'px';
+            fish.style.animationDuration = (5 + Math.random() * 3) + 's';
+
+            canvas.appendChild(fish);
+
+            setTimeout(() => {
+                if (fish.parentNode) {
+                    fish.remove();
+                }
+            }, 10000);
+        }
+
+        function spawnBubble() {
+            if (!gameActive) return;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.left = Math.random() * canvas.clientWidth + 'px';
+            const size = 10 + Math.random() * 20;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.animationDuration = (3 + Math.random() * 2) + 's';
+
+            canvas.appendChild(bubble);
+
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            }, 5000);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearAllIntervals();
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalSaved').textContent = marineLifeSaved;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function restartGame() {
+            init();
+        }
+
+        function shareResults() {
+            const text = `🌊 I just collected ${score} pieces of plastic and saved ${marineLifeSaved} marine creatures in Ocean Guardian! 🐢\n\nJoin me in fighting ocean pollution! #OceanGuardian #SaveOurOceans`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Ocean Guardian',
+                    text: text
+                }).catch(() => {
+                    alert('Great job! Share your score with friends to spread awareness about ocean pollution!');
+                });
+            } else {
+                alert('Great job! Share your score with friends to spread awareness about ocean pollution!');
+            }
+        }
+
+        // Initialize game on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
